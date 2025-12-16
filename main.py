@@ -78,7 +78,7 @@ def obter_dados(limit: int = 5000, offset: int = 0):
 
     CASE f.tipocliente_id
         WHEN '7' THEN 'EMPRESARIAL' WHEN '14' THEN 'FRANQUIAS'
-        WHEN '15' THEN 'FUNDO DE FORMATURA' WHEN '16' THEN 'OUTROS'
+        WHEN '15' THEN 'FUNDO DE FORMATURA' WHEN '16' THEN 'OUTROS' WHEN '17' THEN 'PRE EVENTO'
     END AS tipo_cliente_fundo,
 
     COALESCE(LEAST(f.dt_contrato, f.dt_cadastro), f.dt_cadastro) AS dt_contrato_fundo,
