@@ -46,7 +46,6 @@ def obter_dados(limit: int = 5000, offset: int = 0):
         with conn.cursor() as cursor:
             query = """
                 SELECT
- 
     CASE 
         WHEN u.nm_unidade = 'Campos' THEN 'Itaperuna Muriae'
         ELSE u.nm_unidade 
@@ -54,7 +53,6 @@ def obter_dados(limit: int = 5000, offset: int = 0):
     f.id AS id_fundo,
     f.nm_fundo,
     f.dt_baile,
-    
     
     CASE f.tp_servico
         WHEN '1' THEN 'Pacote'
@@ -83,7 +81,6 @@ def obter_dados(limit: int = 5000, offset: int = 0):
         WHEN '15' THEN 'FUNDO DE FORMATURA' WHEN '16' THEN 'OUTROS'
     END AS tipo_cliente_fundo,
 
-    
     COALESCE(LEAST(f.dt_contrato, f.dt_cadastro), f.dt_cadastro) AS dt_contrato_fundo,
     f.dt_cadastro,
     
@@ -99,7 +96,6 @@ def obter_dados(limit: int = 5000, offset: int = 0):
     f.maf_replanejado,
     fc_grup.id AS id_juncao,
 
-    
     COALESCE(stats_geral.integrantes_ativos, 0) AS integrantes_ativos,
     COALESCE(stats_geral.vvr_ativos, 0) AS vvr_ativos,
     COALESCE(stats_geral.total_desligamentos, 0) AS total_desligamentos,
@@ -117,28 +113,23 @@ FROM tb_fundo f
     LEFT JOIN tb_usuario u_prod ON u_prod.id = f.consultorproducao_id
     LEFT JOIN tb_usuario u_plan ON u_plan.id = f.consultorplanejamento_id
 
-    
     LEFT JOIN LATERAL (
         SELECT 
-            
             COUNT(*) FILTER (
                 WHERE i.fl_ativo IS TRUE 
                 AND (i.nu_status NOT IN (11, 9, 8, 13) OR i.nu_status IS NULL)
             ) AS integrantes_ativos,
-            
             
             SUM(fcota.vl_plano) FILTER (
                 WHERE i.fl_ativo IS TRUE 
                 AND (i.nu_status NOT IN (11, 9, 8, 13) OR i.nu_status IS NULL)
             ) AS vvr_ativos,
             
-            
             COUNT(*) FILTER (
                 WHERE i.fl_ativo = FALSE
                 AND i.dt_desligamento IS NOT NULL
                 AND i.dt_desligamento > '2010-12-31'
                 AND i.nu_status NOT IN (5,7,8,9,12,13,14)
-                
             ) AS total_desligamentos
 
         FROM tb_integrante i
@@ -146,38 +137,32 @@ FROM tb_fundo f
         WHERE i.fundo_id = f.id
     ) stats_geral ON TRUE
 
-    
     LEFT JOIN LATERAL (
         SELECT 
-            
             COUNT(*) FILTER (WHERE resumo_int.is_inadimplente = 1) AS total_inadimplentes,
             
-            
             COUNT(*) FILTER (
-                WHERE resumo_int.is_inadimplente = 1    -- Tem boleto vencido
-                  AND resumo_int.total_pago = 0         -- Nunca pagou nada válido
-                  AND resumo_int.status_valido_nunca_pagou = 1 -- Status OK
+                WHERE resumo_int.is_inadimplente = 1    
+                  AND resumo_int.total_pago = 0         
+                  AND resumo_int.status_valido_nunca_pagou = 1 
             ) AS int_nunca_pagaram
         FROM (
             SELECT 
                 i.id,
-               
                 CASE WHEN i.nu_status NOT IN (10, 11, 9, 8, 13, 14) THEN 1 ELSE 0 END as status_valido_nunca_pagou,
-                
                 
                 SUM(CASE 
                     WHEN o.vl_pago > 0 
-                         AND o.ds_mensagem NOT ILIKE '%Especial%' 
-                         AND o.ds_mensagem NOT ILIKE '%Convite extra%'
+                         AND o.ds_mensagem NOT ILIKE '%%Especial%%' 
+                         AND o.ds_mensagem NOT ILIKE '%%Convite extra%%'
                     THEN 1 ELSE 0 END) AS total_pago,
-                
                 
                 MAX(CASE 
                     WHEN o.dt_vencimento < (CURRENT_DATE - 30)
                          AND o.dt_liquidacao IS NULL 
                          AND (o.vl_pago IS NULL OR o.vl_pago = 0)
-                         AND o.ds_mensagem NOT ILIKE '%Especial%' 
-                         AND o.ds_mensagem NOT ILIKE '%Convite extra%'
+                         AND o.ds_mensagem NOT ILIKE '%%Especial%%' 
+                         AND o.ds_mensagem NOT ILIKE '%%Convite extra%%'
                          AND o.fl_ativo IS TRUE
                     THEN 1 ELSE 0 END) AS is_inadimplente
             FROM tb_integrante i
@@ -189,7 +174,6 @@ FROM tb_fundo f
         ) resumo_int
     ) stats_fin ON TRUE
 
-    
     LEFT JOIN LATERAL (
         SELECT COUNT(DISTINCT ei.integrante_id) AS aderidos_principal
         FROM tb_evento_contratado ec
@@ -209,7 +193,7 @@ WHERE
 
 ORDER BY 
     u.nm_unidade, f.nm_fundo 
-                LIMIT %s OFFSET %s
+LIMIT %s OFFSET %s
             """
             cursor.execute(query, (limit, offset))
             dados = cursor.fetchall()
